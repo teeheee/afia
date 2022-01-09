@@ -62,10 +62,10 @@ class ImageList(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.image_view_list = list()
-        self.master = master
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_propagate(True)
+        self.config(width=200,height=500)
         self.create_canvas()
 
     def add_image_model(self, image_model):
@@ -76,17 +76,20 @@ class ImageList(tk.Frame):
 
     def create_canvas(self):
         self.canvas = tk.Canvas(self)
-        self.canvas.grid(row=0, column=0, sticky="news")
+        self.canvas.grid(row=0, column=0)
         self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.vsb.grid(row=0, column=1, sticky='ns')
+        self.vsb.config(command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.vsb.set)
         self.image_frame = tk.Frame(self.canvas)
-        self.image_frame.grid(row=0, column=1, sticky='ns')
-        self.canvas.create_window((0, 0), window=self, anchor='nw')
-
+        self.canvas.create_window((0, 0), window=self.image_frame, anchor='nw')
+        
     def update(self):
         for image_model in self.image_view_list:
             image_model.update()
+        self.image_frame.update_idletasks()
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
 
 class ControlView(tk.Frame):
     def __init__(self, master=None, button_callback_dict=dict(), foucault_test=None):
@@ -121,7 +124,7 @@ class ResultView(tk.Frame):
         super().__init__(master)
         
     def generate_result_plot(self, foucault_test):
-        self.figure = Figure(figsize=(8, 5), dpi=100)
+        self.figure = Figure(figsize=(8, 3), dpi=100)
         axis = self.figure.add_subplot(111)
         axis.plot(foucault_test.h_mm, foucault_test.w_nm)
         axis.set_xlabel("Radius in mm")
