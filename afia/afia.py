@@ -13,6 +13,7 @@ class MainApplication:
             "analyse": self.run_analysis,
             "apply_offset": self.apply_offset_config,
             "load_images": self.populate_images,
+            "clear_images": self.clear_images,
         }
         self.control_view = view.ControlView(master=self.master, 
                                              button_callback_dict=callbacks, 
@@ -22,6 +23,14 @@ class MainApplication:
         self.image_view_list.grid(row=0, column=1)
         self.result_view = view.ResultView(self.master)
         self.result_view.grid(row=0, column=2)
+
+    def _load_images(self, files):
+        for file in files:
+            image_model = models.image_model(file)
+            self.foucault_test_model.add_image_model(image_model)
+            self.image_view_list.add_image_model(image_model)
+        self.image_view_list.update()
+
 
     def run_analysis(self):
         analyse.run_analysis(self.foucault_test_model)
@@ -34,20 +43,24 @@ class MainApplication:
             image.position = offset
             offset += 0.1
 
-    def populate_images(self, path):
-        files = os.listdir(path)
-        for file in files[0:8]:
-            if ".png" in file:
-                image_model = models.image_model(path+file)
-                self.foucault_test_model.add_image_model(image_model)
-                self.image_view_list.add_image_model(image_model)
+    def populate_images(self):
+        files = tk.filedialog.askopenfilenames()
+        self._load_images(files)
+
+    def clear_images(self):
+        self.foucault_test_model.clear()
+        self.image_view_list.clear()
         self.image_view_list.update()
 
+
   
-if __name__ == "__main__":
+def main():    
     root = tk.Tk()
     main = MainApplication(root)
-    main.populate_images("test/Parabola 200mm f8/")
-    main.apply_offset_config()
-    main.run_analysis()
+    main._load_images(["test/Carls 6inch f8/DSC_0800.JPG","test/Carls 6inch f8/DSC_0801.JPG"])
+    main.clear_images()
     root.mainloop()
+
+
+if __name__ == "__main__":
+    main()

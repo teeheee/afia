@@ -18,3 +18,13 @@ Main motivation was to learn how Foucault Unmasked software works and to make it
 > python -m afia.afia
 
 
+# TODO
+
+* apply offset does not update offset
+* make config be used in algorithm
+* add statusbar with progress
+* improve load time of images
+* improve calculation time
+* load other analysis
+* add save model button
+* add compare models

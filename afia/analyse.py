@@ -1,9 +1,5 @@
-from tkinter.constants import X
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-
-
 
 def smooth(y):
     box_pts = 10
@@ -11,12 +7,9 @@ def smooth(y):
     y_smooth = np.convolve(y, box, mode='same')
     return y_smooth
 
-def load_image(filename):
-    return cv2.imread(filename)
-
-def crop_image(image):
+def crop_image(image, minRadius=100, maxRadius=4000):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 4, 10000, param1=50, param2=50, minRadius=100, maxRadius=4000)
+    circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 4, 10000, param1=50, param2=50, minRadius=minRadius, maxRadius=maxRadius)
     if circles is None:
         raise Exception("no circle found")
     if len(circles) > 1:
@@ -30,7 +23,7 @@ def crop_image(image):
     x_start = x-r
     x_stop = x+r
     output = image[y_start:y_stop, x_start:x_stop]
-    return output
+    return output, r
 
 
 def find_greyscale(image, percent_of_circle_width=0.05, center_obstruction=0):
@@ -71,8 +64,10 @@ def normalize_zones(h, l, zones=20):
         idx = np.argwhere((h > zone_start) & (h < zone_end))
         if len(idx) > 0:
             L += [np.mean(l[idx])]
-        else:
+        elif len(L) > 0:
             L += [L[-1]]
+        else:
+            L += [0]
         H += [zone_start + 0.5/zones]    
     H = np.array(H)
     L = np.array(L)
@@ -93,14 +88,24 @@ def calc_optimized_radius_offset(h, l):
 def calculate_sphere_dev(h, l, mirror_roc, mirror_size, zones=12):
     z = mirror_size/(2*zones)
     l_mm = l*mirror_size/4
-    w = -np.cumsum(z*h*l_mm)/mirror_roc**2
+    mul = z*h*l_mm
+    div = mirror_roc**2
+    w = -np.cumsum(mul)/div
     return w, h
 
-def run_analysis(foucault_test):
+def run_analysis(foucault_test, image_radius_range=100):
     h = []
     l = []
+    image_radius = None
     for image in foucault_test.image_list:
-        croped_image = crop_image(image.image)
+        if image_radius == None:
+            croped_image, image_radius = crop_image(image.image)
+        else:
+            croped_image, image_radius = crop_image(
+                image.image, 
+                minRadius=image_radius-image_radius_range,
+                maxRadius=image_radius+image_radius_range)
+
         image.crop_image = croped_image
         g1,g2 = find_greyscale(croped_image)
         image.g1 = g1
@@ -117,30 +122,3 @@ def run_analysis(foucault_test):
     foucault_test.w_nm = w*10**6
     foucault_test.h_mm = h*foucault_test.mirror_diameter/2
 
-
-def run_full_anaylsis(filename_list, r_offset_list, mirror_size=200, mirror_roc=2400, zone_count=30):
-    h = []
-    l = []
-    for filename, r_offset in zip(filename_list, r_offset_list):
-        image = load_image(filename)
-        croped_image = crop_image(image)
-        g1,g2 = find_greyscale(croped_image)
-        zones = find_zones(g1,g2)
-        print(filename, zones*mirror_size/2)
-        h += zones.tolist()
-        l += [r_offset]*len(zones)
-    h = np.array(h)
-    l = np.array(l)
-    l += calc_optimized_radius_offset(h, l)
-    h,l = normalize_zones(h, l, zones=zone_count)
-    w, h = calculate_sphere_dev(h, l, mirror_roc, mirror_size, zones=zone_count)
-    w_nm = w*10**6
-    h_mm = h*mirror_size/2
-
-    data = np.loadtxt("test/Parabola 200mm f8/notes/result.csv", delimiter=";")
-    print(data)
-    plt.plot(data[:,0], data[:,1])
-    plt.plot(h_mm, w_nm)
-    plt.xlabel("Radius in mm")
-    plt.ylabel("spherical deviation in nm")
-    plt.show()

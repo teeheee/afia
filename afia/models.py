@@ -7,7 +7,8 @@ class foucault_test_model:
         self.mirror_roc = 1000
         self.conic_constant = 0
         self.zone_count = 10
-        self.greyscale_bar_width_percent = 0.01
+        self.mirror_pixel_radius = 1500
+        self.greyscale_bar_width_percent = 1
 
     def add_image_model(self, image_model):
         self.image_list.append(image_model)
@@ -19,7 +20,14 @@ class foucault_test_model:
             "zone_count": self.zone_count,
             "bar_width": self.greyscale_bar_width_percent,
             "conic_constant": self.conic_constant,
+            "mirror_pixel_radius": self.mirror_pixel_radius,
         }
+
+    def clear(self):
+        self.image_list = list()
+
+    def change(self, key, value):
+        setattr(self, key, int(value))
 
 
 class image_model:

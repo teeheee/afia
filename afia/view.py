@@ -1,4 +1,5 @@
 import tkinter as tk
+import numpy as np
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -15,24 +16,28 @@ class ImageView:
         self.update()
 
     def generate_input_image_widget(self):
-        self.figure = Figure(figsize=(1, 1), dpi=100)
-        axis = self.figure.add_subplot(111)
+        figure = Figure(figsize=(1, 1), dpi=100)
+        axis = figure.add_subplot(111)
         axis.imshow(self.image_model.image)
         axis.axis('off')
-        canvas = FigureCanvasTkAgg(self.figure, master=self.master)  # A tk.DrawingArea.
+        canvas = FigureCanvasTkAgg(figure, master=self.master)  # A tk.DrawingArea.
         canvas.draw()
         return canvas.get_tk_widget()
 
     def generate_crop_image_widget(self):
-        self.figure = Figure(figsize=(1, 1), dpi=100)
+        figure = Figure(figsize=(1, 1), dpi=100)
         if self.image_model.crop_image is not None:
-            axis = self.figure.add_subplot(111)
+            axis = figure.add_subplot(111)
             axis.imshow(self.image_model.crop_image)
             offset = len(self.image_model.crop_image)/2
-            axis.plot(self.image_model.g1*offset+offset)
-            axis.plot(self.image_model.g2*offset/5+offset)
+            g1 = self.image_model.g1
+            g1 = 0.5*offset*g1/np.max(np.abs(g1)) + offset
+            g2 = self.image_model.g2
+            g2 = 0.5*offset*g2/np.max(np.abs(g2)) + offset
+            axis.plot(g1)
+            axis.plot(g2)
             axis.axis('off')
-        canvas = FigureCanvasTkAgg(self.figure, master=self.master)  # A tk.DrawingArea.
+        canvas = FigureCanvasTkAgg(figure, master=self.master)  # A tk.DrawingArea.
         canvas.draw()
         return canvas.get_tk_widget()
 
@@ -54,8 +59,12 @@ class ImageView:
         self.position_text.grid(row=self.row, column=2)
         self.crop_image_widget = self.generate_crop_image_widget()
         self.crop_image_widget.grid(row=self.row, column=3)
-        self.crop_image_widget = self.generate_zone_text()
-        self.crop_image_widget.grid(row=self.row, column=4)
+        self.zone_text = self.generate_zone_text()
+        self.zone_text.grid(row=self.row, column=4)
+
+    def destroy(self):
+        self.tk_widget.destroy()
+
 
 
 class ImageList(tk.Frame):
@@ -85,15 +94,21 @@ class ImageList(tk.Frame):
         self.canvas.create_window((0, 0), window=self.image_frame, anchor='nw')
         
     def update(self):
-        for image_model in self.image_view_list:
-            image_model.update()
+        for image_view in self.image_view_list:
+            image_view.update()
         self.image_frame.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+    def clear(self):
+        for image_view in self.image_view_list:
+            image_view.destroy()
+        self.image_view_list = list()
 
 
 class ControlView(tk.Frame):
     def __init__(self, master=None, button_callback_dict=dict(), foucault_test=None):
         super().__init__(master)
+        self.foucault_test = foucault_test
         self.config_dict = foucault_test.generate_config_dict()
         self.button_callback_dict = button_callback_dict
         self.input_field_dict = dict()
@@ -107,9 +122,12 @@ class ControlView(tk.Frame):
             value = self.config_dict[key]
             tk.Label(self, text=label).grid(row=i, column=0)
             self.input_variable_dict[key] = tk.StringVar(self, value=value)
-            self.input_field_dict[key] = tk.Entry(self, textvariable=self.input_variable_dict[key])
-            self.input_field_dict[key].grid(row=i, column=1)
-            
+            self.input_field_dict[key] = tk.Entry(
+                self, 
+                textvariable=self.input_variable_dict[key],
+                validate="focusout", 
+                validatecommand=self.change_callback)
+            self.input_field_dict[key].grid(row=i, column=1)    
         for i, key in enumerate(self.button_callback_dict):
             callback = self.button_callback_dict[key]
             label = key
@@ -117,7 +135,10 @@ class ControlView(tk.Frame):
             self.button_field_dict[key] = tk.Button(self, text=label, command=callback)
             self.button_field_dict[key].grid(row=i, column=0)
 
-    
+    def change_callback(self):
+        for key in self.input_variable_dict:
+            self.foucault_test.change(key, self.input_variable_dict[key].get())
+
 
 class ResultView(tk.Frame):
     def __init__(self, master=None):
