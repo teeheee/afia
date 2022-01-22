@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+import logging
+
+logger = logging.getLogger("analyse")
 
 def smooth(y):
     box_pts = 10
@@ -8,7 +11,7 @@ def smooth(y):
     return y_smooth
 
 def crop_image(image, minRadius=100, maxRadius=4000):
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    logger.debug("crop_image")
     circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 4, 10000, param1=50, param2=50, minRadius=minRadius, maxRadius=maxRadius)
     if circles is None:
         raise Exception("no circle found")
@@ -27,6 +30,7 @@ def crop_image(image, minRadius=100, maxRadius=4000):
 
 
 def find_greyscale(image, percent_of_circle_width=0.05, center_obstruction=0):
+    logger.debug("find_greyscale")
     r = int(len(image)/2)
     y_start = r-int(r*percent_of_circle_width/2)
     y_stop = r+int(r*percent_of_circle_width/2)
@@ -52,10 +56,12 @@ def find_greyscale(image, percent_of_circle_width=0.05, center_obstruction=0):
     return g1,g2
 
 def find_zones(g1, g2):
+    logger.debug("find_zones")
     idx = np.argwhere(np.diff(np.sign(g1 - g2))).flatten()/len(g1)
     return idx
 
 def normalize_zones(h, l, zones=20):
+    logger.debug("normalize_zones")
     H = list()
     L = list()
     for zone in range(zones):
@@ -74,6 +80,7 @@ def normalize_zones(h, l, zones=20):
     return H,L
 
 def calc_optimized_radius_offset(h, l):
+    logger.debug("calc_optimized_radius_offset")
     prev_sum = np.inf
     prev_r = 0
     for r in np.linspace(-2,2,1000):
@@ -94,6 +101,7 @@ def calculate_sphere_dev(h, l, mirror_roc, mirror_size, zones=12):
     return w, h
 
 def run_analysis(foucault_test, image_radius_range=100):
+    logger.debug("run_analysis")
     h = []
     l = []
     image_radius = None

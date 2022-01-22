@@ -1,9 +1,11 @@
-import os
 import tkinter as tk
-
+import logging
 from afia import analyse
 from afia import view
 from afia import models
+import logging
+
+logger = logging.getLogger("analyse")
 
 class MainApplication:
     def __init__(self, master=None):
@@ -33,32 +35,36 @@ class MainApplication:
 
 
     def run_analysis(self):
+        logger.debug("run_analysis")
         analyse.run_analysis(self.foucault_test_model)
         self.image_view_list.update()
         self.result_view.generate_result_plot(self.foucault_test_model)
 
     def apply_offset_config(self):
+        logger.debug("apply_offset_config")
         offset = 0
         for image in self.foucault_test_model.image_list:
             image.position = offset
             offset += 0.1
+        self.image_view_list.update()
 
     def populate_images(self):
+        logger.debug("populate_images")
         files = tk.filedialog.askopenfilenames()
         self._load_images(files)
 
     def clear_images(self):
+        logger.debug("clear_images")
         self.foucault_test_model.clear()
         self.image_view_list.clear()
         self.image_view_list.update()
 
 
   
-def main():    
+def main():  
+    logging.basicConfig(level=logging.DEBUG)
     root = tk.Tk()
-    main = MainApplication(root)
-    main._load_images(["test/Carls 6inch f8/DSC_0800.JPG","test/Carls 6inch f8/DSC_0801.JPG"])
-    main.clear_images()
+    MainApplication(root)
     root.mainloop()
 
 

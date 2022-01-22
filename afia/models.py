@@ -1,4 +1,7 @@
 import cv2
+import logging
+
+logger = logging.getLogger("models")
 
 class foucault_test_model:
     def __init__(self):
@@ -11,6 +14,7 @@ class foucault_test_model:
         self.greyscale_bar_width_percent = 1
 
     def add_image_model(self, image_model):
+        logger.debug("add_image_model")
         self.image_list.append(image_model)
 
     def generate_config_dict(self):
@@ -24,9 +28,11 @@ class foucault_test_model:
         }
 
     def clear(self):
+        logger.debug("clear")
         self.image_list = list()
 
     def change(self, key, value):
+        logger.debug("change key %s to %s"%(key, value))
         setattr(self, key, int(value))
 
 
@@ -36,7 +42,7 @@ class image_model:
         self.filepath = filepath
         self.filename = filepath.split("/")[-1]
         if image == None:
-            self.image = cv2.imread(self.filepath)
+            self.image = cv2.imread(self.filepath, flags=cv2.IMREAD_REDUCED_GRAYSCALE_4 )
         else:
             self.image = image
         self.crop_image = None

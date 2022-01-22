@@ -1,17 +1,21 @@
 import tkinter as tk
 import numpy as np
+import logging
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+logger = logging.getLogger("view")
 
 class ImageView:
     def __init__(self, master=None, row=0):
+        logger.debug("init image_view row=%d"%row)
         self.master = master
         self.image_model = None
         self.row = row
 
     def set_image_model(self, image_model):
+        logger.debug("set_image_model row=%d"%self.row)
         self.image_model = image_model
         self.update()
 
@@ -51,6 +55,7 @@ class ImageView:
         return tk.Label(self.master, text=str(self.image_model.zones))
 
     def update(self):
+        logger.debug("update image view row=%d"%self.row)
         self.label_text = self.generate_label_text()
         self.label_text.grid(row=self.row, column=0)
         self.tk_widget = self.generate_input_image_widget()
@@ -63,12 +68,14 @@ class ImageView:
         self.zone_text.grid(row=self.row, column=4)
 
     def destroy(self):
+        logger.debug("update image view row=%d"%self.row)
         self.tk_widget.destroy()
 
 
 
 class ImageList(tk.Frame):
     def __init__(self, master=None):
+        logger.debug("init image list")
         super().__init__(master)
         self.image_view_list = list()
         self.grid_rowconfigure(0, weight=1)
@@ -78,6 +85,7 @@ class ImageList(tk.Frame):
         self.create_canvas()
 
     def add_image_model(self, image_model):
+        logger.debug("add image to list")
         row = len(self.image_view_list)
         image_view = ImageView(self.image_frame, row=row)
         image_view.set_image_model(image_model)
@@ -94,12 +102,14 @@ class ImageList(tk.Frame):
         self.canvas.create_window((0, 0), window=self.image_frame, anchor='nw')
         
     def update(self):
+        logger.debug("update whole image list")
         for image_view in self.image_view_list:
             image_view.update()
         self.image_frame.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
     def clear(self):
+        logger.debug("clear whole image list")
         for image_view in self.image_view_list:
             image_view.destroy()
         self.image_view_list = list()
@@ -117,6 +127,7 @@ class ControlView(tk.Frame):
         self.generate_input_fields()
 
     def generate_input_fields(self):
+        logger.debug("control generate_input_fields")
         for i, key in enumerate(self.config_dict):
             label = key
             value = self.config_dict[key]
@@ -145,6 +156,7 @@ class ResultView(tk.Frame):
         super().__init__(master)
         
     def generate_result_plot(self, foucault_test):
+        logger.debug("result generate_result_plot")
         self.figure = Figure(figsize=(8, 3), dpi=100)
         axis = self.figure.add_subplot(111)
         axis.plot(foucault_test.h_mm, foucault_test.w_nm)
