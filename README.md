@@ -5,7 +5,7 @@ Project still under development
 # Motivation
 
 This is a python reimplementation of [Foucault Unmasked](https://github.com/carlhitchon/Foucault-Unmasked).
-Main motivation was to learn how Foucault Unmasked software works and to make it more easy to add aditional analysis.
+Main motivation was to learn how Foucault Unmasked software works and to make it more easy to add additional analysis.
 
 # Development Enviroment
 
