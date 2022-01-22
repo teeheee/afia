@@ -52,6 +52,7 @@ class MainApplication:
         logger.debug("populate_images")
         files = tk.filedialog.askopenfilenames()
         self._load_images(files)
+        self.apply_offset_config()
 
     def clear_images(self):
         logger.debug("clear_images")

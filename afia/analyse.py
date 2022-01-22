@@ -4,15 +4,23 @@ import logging
 
 logger = logging.getLogger("analyse")
 
-def smooth(y):
-    box_pts = 10
+def smooth(y, N=10):
+    box_pts = N
     box = np.ones(box_pts)/box_pts
     y_smooth = np.convolve(y, box, mode='same')
     return y_smooth
 
-def crop_image(image, minRadius=100, maxRadius=4000):
+def crop_image(image, minRadius=100, maxRadius=4000, dp=4, mindist=10000, param1=50, param2=50):
     logger.debug("crop_image")
-    circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 4, 10000, param1=50, param2=50, minRadius=minRadius, maxRadius=maxRadius)
+    circles = cv2.HoughCircles(
+        image, 
+        cv2.HOUGH_GRADIENT, 
+        dp, 
+        mindist, 
+        param1=param1, 
+        param2=param2, 
+        minRadius=minRadius, 
+        maxRadius=maxRadius)
     if circles is None:
         raise Exception("no circle found")
     if len(circles) > 1:
@@ -29,7 +37,7 @@ def crop_image(image, minRadius=100, maxRadius=4000):
     return output, r
 
 
-def find_greyscale(image, percent_of_circle_width=0.05, center_obstruction=0):
+def find_greyscale(image, percent_of_circle_width=0.05, center_obstruction=0, smooth_factor=10):
     logger.debug("find_greyscale")
     r = int(len(image)/2)
     y_start = r-int(r*percent_of_circle_width/2)
@@ -42,8 +50,8 @@ def find_greyscale(image, percent_of_circle_width=0.05, center_obstruction=0):
     g2 = np.flip(greyscale[:r])
     g1 = greyscale[r:]
     #smooth
-    g1 = smooth(g1)
-    g2 = smooth(g2)
+    g1 = smooth(g1, N=smooth_factor)
+    g2 = smooth(g2, N=smooth_factor)
     #normalize
     mean = (np.mean(g1)+np.mean(g2))/2
     if mean != 0:
@@ -113,9 +121,11 @@ def run_analysis(foucault_test, image_radius_range=100):
                 image.image, 
                 minRadius=image_radius-image_radius_range,
                 maxRadius=image_radius+image_radius_range)
-
         image.crop_image = croped_image
-        g1,g2 = find_greyscale(croped_image)
+        g1,g2 = find_greyscale(
+            croped_image,
+            percent_of_circle_width=foucault_test.greyscale_bar_width_percent/100,
+            smooth_factor=foucault_test.image_smooth_factor)
         image.g1 = g1
         image.g2 = g2
         zones = find_zones(g1,g2)

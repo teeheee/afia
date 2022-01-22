@@ -20,11 +20,8 @@ Main motivation was to learn how Foucault Unmasked software works and to make it
 
 # TODO
 
-* apply offset does not update offset
-* make config be used in algorithm
+* issue with result plot. Text is cut
 * add statusbar with progress
-* improve load time of images
-* improve calculation time
-* load other analysis
-* add save model button
-* add compare models
+* load other analysis like from dftfringe
+* add a save test button
+* add a comparison between tests
