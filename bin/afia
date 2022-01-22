@@ -1,0 +1,3 @@
+#!/usr/bin/env python
+import afia.afia
+afia.afia.main()

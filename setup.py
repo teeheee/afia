@@ -12,4 +12,5 @@ setup(name='afia',
             'opencv-python', 
             'tk', 
             'matplotlib'],
+      scripts=['bin/afia'],
      )
