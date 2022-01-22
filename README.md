@@ -20,6 +20,7 @@ Main motivation was to learn how Foucault Unmasked software works and to make it
 
 # TODO
 
+* add aspheric error calculations like conic=-1
 * issue with result plot. Text is cut
 * add statusbar with progress
 * load other analysis like from dftfringe

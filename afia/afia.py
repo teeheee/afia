@@ -65,6 +65,8 @@ class MainApplication:
 def main():  
     logging.basicConfig(level=logging.DEBUG)
     root = tk.Tk()
+    root.title("AFIA Another Foucault Image Analyzer") 
+    root.iconbitmap('images/icon.ico')
     MainApplication(root)
     root.mainloop()
 

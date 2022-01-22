@@ -100,13 +100,15 @@ def calc_optimized_radius_offset(h, l):
 
 
 
-def calculate_sphere_dev(h, l, mirror_roc, mirror_size, zones=12):
+def calculate_sphere_dev(h, l, mirror_roc, mirror_size, zones=12, conic=0):
     z = mirror_size/(2*zones)
     l_mm = l*mirror_size/4
     mul = z*h*l_mm
     div = mirror_roc**2
     w = -np.cumsum(mul)/div
-    return w, h
+    conic_correction = (h**2) / (mirror_roc + np.sqrt(mirror_roc**2 - (conic+1)*h**2))
+    sphere_correction = (h**2) / (mirror_roc + np.sqrt(mirror_roc**2 - h**2))
+    return w+conic_correction-sphere_correction, h
 
 def run_analysis(foucault_test, image_radius_range=100):
     logger.debug("run_analysis")
@@ -134,9 +136,15 @@ def run_analysis(foucault_test, image_radius_range=100):
         l += [image.position]*len(zones)
     h = np.array(h)
     l = np.array(l, dtype=np.float)
-    l += calc_optimized_radius_offset(h, l)
+    radius_offset = calc_optimized_radius_offset(h, l)
+    l += radius_offset
     h,l = normalize_zones(h, l, zones=foucault_test.zone_count)
-    w, h = calculate_sphere_dev(h, l, foucault_test.mirror_roc, foucault_test.mirror_diameter, zones=foucault_test.zone_count)
+    w, h = calculate_sphere_dev(
+        h, l, 
+        foucault_test.mirror_roc+radius_offset, 
+        foucault_test.mirror_diameter, 
+        zones=foucault_test.zone_count, 
+        conic=foucault_test.conic_constant)
     foucault_test.w_nm = w*10**6
     foucault_test.h_mm = h*foucault_test.mirror_diameter/2
 
